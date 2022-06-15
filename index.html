@@ -1,0 +1,102 @@
+<html>
+    <head>
+        <title>ATC Tool</title>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="https://unpkg.com/mdui@1.0.2/dist/css/mdui.min.css"/>
+        <style>
+            .tool-title{
+                text-align: center;
+                padding: 5px
+            }
+            body {
+                text-align: center;
+            }
+            
+        </style>
+    </head>
+    <body class="mdui-theme-layout-dark">
+        <table width="100%" height="100%" border="0" align="center">
+            <tr>
+            <td align="center">
+            <div class="mdui-container">
+            <div class="mdui-row">
+                <div class="mdui-col-xs-2" class="tool-atis">
+                    <div class="mdui-typo-title">ATIS</div>
+                    <div class="mdui-typo-display-1" id="atis" onclick="giveCode(this)">A</div>
+                </div>
+                <div class="mdui-col-xs-5">
+                    <div class="mdui-typo-title" contenteditable="true">TWR</div>
+                    <div class="mdui-typo-headline" contenteditable="true">118.375</div>
+                    <div class="mdui-typo-caption-opacity" contenteditable="true">备注</div>
+                </div>
+                <div class="mdui-col-xs-5">
+                    <div class="mdui-typo-title">ACC</div>
+                    <div class="mdui-typo-headline" contenteditable="true">127.8</div>
+                    <div class="mdui-typo-caption-opacity" contenteditable="true">边界5海里/过6000</div>
+                </div>
+            </div>
+            <br>
+            <div class="mdui-row mdui-valign">
+                <div class="mdui-col-xs-2">
+                    <div class="mdui-typo-title" onclick="settingAirport()">QNH</div>
+                    <div class="mdui-typo-display-1" id="QNH">1020</div>
+                </div>
+                <div class="mdui-col-xs-10">
+                    <div class="mdui-typo-headline" contenteditable="true">OTHER</div>
+                    <div class="mdui-typo-subheading" contenteditable="true">    
+                    RWY: 02L<br>SID: ELKUR-01D<br>STAR: AVBOX-01A
+                    </div>
+                </div>
+            </div>
+            </div>
+        </td>
+        </tr>
+        </table>
+    </body>
+    <script>
+        let airport="";
+        //reg a onload event
+        window.onload = function(){
+            airport = settingAirport();
+            getQNH();
+            setInterval(getQNH, 1000*60);
+        }
+        function giveCode(obj){
+            let code = obj.innerHTML;
+            if (code == "Z") {
+                code = "A";
+            } else {
+                code = String.fromCharCode(code.charCodeAt(0) + 1);
+            }
+            obj.innerHTML = code;
+        }
+        function getQNH() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://dry-snow-1529.awwman.workers.dev/cors/?apiurl=http://avt7.xiamenair.com/Home/AirportMetarInfo?airport4Code=" + airport + "&_=" + new Date().getTime(), true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    let data = JSON.parse(xhr.responseText);
+                    if (data.AirPressure.length == 0) {
+                        document.getElementById("QNH").innerHTML = "NaN";
+                    }
+                    let qnh = data.AirPressure[0].value;
+                    document.getElementById("QNH").innerHTML = qnh;
+                }
+            }
+            xhr.send();
+        }
+        function checkAllEnglish(text) {
+            var reg = /^[a-zA-Z]+$/;
+            return reg.test(text);
+        }
+        function settingAirport() {
+            let dialog = prompt("请输入机场代码", "ZBAA");
+            if (dialog.length != 4 && checkAllEnglish(dialog)) {
+                alert("请输入有效的机场代码");
+                return;
+            }
+            airport = dialog;
+            return airport;
+        }
+    </script>
+</html>
